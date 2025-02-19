@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "doc-classifier"
+version = "0.1.0"
+description = "Document Classifier created from Kaggle Dataset"
+authors = ["Mario Mesas <mmesasro@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+jupyter = "^1.1.1"
+pandas = "^2.2.3"
+numpy = "^2.2.3"
+pydantic = "^2.10.6"
+uvicorn = "^0.34.0"
+fastapi = "^0.115.8"
+opentelemetry-sdk = "^1.30.0"
+opentelemetry-instrumentation-fastapi = "^0.51b0"
+opentelemetry-exporter-otlp-proto-grpc = "^1.30.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
