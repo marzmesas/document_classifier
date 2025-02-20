@@ -16,7 +16,14 @@ fastapi = "^0.115.8"
 opentelemetry-sdk = "^1.30.0"
 opentelemetry-instrumentation-fastapi = "^0.51b0"
 opentelemetry-exporter-otlp-proto-grpc = "^1.30.0"
+scikit-learn = "^1.6.1"
+torch = "^2.6.0"
+transformers = "^4.49.0"
 
+
+[tool.poetry.group.dev.dependencies]
+lazypredict = "^0.2.13"
+matplotlib = "^3.10.0"
 
 [build-system]
 requires = ["poetry-core"]
