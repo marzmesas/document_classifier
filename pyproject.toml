@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "doc-classifier"
+name = "document_classifier"
 version = "0.1.0"
 description = "Document Classifier created from Kaggle Dataset"
 authors = ["Mario Mesas <mmesasro@gmail.com>"]
@@ -24,6 +24,7 @@ transformers = "^4.49.0"
 [tool.poetry.group.dev.dependencies]
 lazypredict = "^0.2.13"
 matplotlib = "^3.10.0"
+onnx = "^1.17.0"
 
 [build-system]
 requires = ["poetry-core"]
