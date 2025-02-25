@@ -17,7 +17,7 @@ def save_checkpoint(model, optimizer, epoch, loss, checkpoint_dir):
     }, checkpoint_path)
     print(f"Checkpoint saved: {checkpoint_path}")
 
-def save_best_model(model, train_loader,final_dir):
+def save_best_model(model, device,train_loader,final_dir):
     """Save best model in TorchScript and ONNX formats for optimized inference."""
     if not os.path.exists(final_dir):
       os.makedirs(final_dir)
@@ -100,4 +100,4 @@ def train_model(model, train_loader, val_loader,
         # Save best model
         if avg_val_loss < best_val_loss:
             best_val_loss = avg_val_loss
-            save_best_model(model, train_loader, final_dir)
+            save_best_model(model, device, train_loader, final_dir)

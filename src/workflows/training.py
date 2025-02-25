@@ -21,8 +21,10 @@ X, y, df = prepare_data(df)
 label_encoder = LabelEncoder()
 y = label_encoder.fit_transform(y)
 
-# TODO: Convert constant into config.yaml loading
+# TODO: Convert constants into config.yaml loading
 MODEL_NAME = "roberta-base"  # Change to "distilbert-base-uncased" for DistilBERT
+CHECKPOINT_DIR = 'models/checkpoints'
+FINAL_MODEL_DIR = 'models/final_model'
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
@@ -53,7 +55,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.AdamW(model.parameters(), lr=2e-5)
 
 # Train model
-train_model(model, train_loader, val_loader, optimizer, criterion, device)
+train_model(model, train_loader, val_loader, optimizer, criterion, device, CHECKPOINT_DIR, FINAL_MODEL_DIR)
 
 # Test trained model 
 test_model(model, test_loader, device)
