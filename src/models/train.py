@@ -6,7 +6,7 @@ def save_checkpoint(model, optimizer, epoch, loss, checkpoint_dir):
     """Save model checkpoint (state_dict only)."""
     if not os.path.exists(checkpoint_dir):
       os.makedirs(checkpoint_dir)
-    print(f"Created directory: {checkpoint_dir}")
+      print(f"Created directory: {checkpoint_dir}")
     
     checkpoint_path = os.path.join(checkpoint_dir, f"epoch_{epoch}.pth")
     torch.save({
@@ -17,23 +17,25 @@ def save_checkpoint(model, optimizer, epoch, loss, checkpoint_dir):
     }, checkpoint_path)
     print(f"Checkpoint saved: {checkpoint_path}")
 
-def save_best_model(model, device,train_loader,final_dir):
+def save_best_model(model, device, train_loader, final_dir):
     """Save best model in TorchScript and ONNX formats for optimized inference."""
     if not os.path.exists(final_dir):
-      os.makedirs(final_dir)
-    print(f"Created directory: {final_dir}")
+        os.makedirs(final_dir)
+        print(f"Created directory: {final_dir}")
     
     best_model_path = os.path.join(final_dir, "roberta_mlp_best_model.pth")
     torch.save(model.state_dict(), best_model_path)
 
+    # Get example inputs for tracing
     real_sample = next(iter(train_loader))
     real_input_ids = real_sample["input_ids"][0].unsqueeze(0).to(device)
     real_attention_mask = real_sample["attention_mask"][0].unsqueeze(0).to(device)
 
-    # Convert to TorchScript
+    # Convert to TorchScript using trace
     scripted_model_path = os.path.join(final_dir, "roberta_mlp_best_model_torchscript.pt")
-    scripted_model = torch.jit.trace(model,(real_input_ids, real_attention_mask))
-    scripted_model.save(scripted_model_path)
+    model.eval()  # Set to eval mode before tracing
+    traced_model = torch.jit.trace(model, (real_input_ids, real_attention_mask))
+    traced_model.save(scripted_model_path)
 
     # # Convert to ONNX
     # onnx_model_path = os.path.join(final_dir, "roberta_mlp_best_model.onnx")
