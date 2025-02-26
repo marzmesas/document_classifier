@@ -35,20 +35,20 @@ def save_best_model(model, device,train_loader,final_dir):
     scripted_model = torch.jit.trace(model,(real_input_ids, real_attention_mask))
     scripted_model.save(scripted_model_path)
 
-    # Convert to ONNX
-    onnx_model_path = os.path.join(final_dir, "roberta_mlp_best_model.onnx")
-    torch.onnx.export(
-    model, 
-    (real_input_ids, real_attention_mask), 
-    onnx_model_path,
-    input_names=["input_ids", "attention_mask"],
-    output_names=["logits"],
-    dynamic_axes={"input_ids": {0: "batch_size"}, "attention_mask": {0: "batch_size"}},
-    opset_version=14
-    )
-    print(f"Best model saved: {best_model_path}")
-    print(f"Converted to TorchScript: {scripted_model_path}")
-    print(f"Converted to ONNX: {onnx_model_path}")
+    # # Convert to ONNX
+    # onnx_model_path = os.path.join(final_dir, "roberta_mlp_best_model.onnx")
+    # torch.onnx.export(
+    # model, 
+    # (real_input_ids, real_attention_mask), 
+    # onnx_model_path,
+    # input_names=["input_ids", "attention_mask"],
+    # output_names=["logits"],
+    # dynamic_axes={"input_ids": {0: "batch_size"}, "attention_mask": {0: "batch_size"}},
+    # opset_version=14
+    # )
+    # print(f"Best model saved: {best_model_path}")
+    # print(f"Converted to TorchScript: {scripted_model_path}")
+    # print(f"Converted to ONNX: {onnx_model_path}")
 
 def train_model(model, train_loader, val_loader, 
                 optimizer, criterion, device, 

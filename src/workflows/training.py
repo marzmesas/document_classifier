@@ -3,17 +3,17 @@ import torch.nn as nn
 import torch.optim as optim
 import pandas as pd
 from transformers import AutoTokenizer
-from models.train import train_model
-from models.test import test_model
-from models.base_model import TransformerMLP
-from data.data_prep import prepare_data
-from datasets.text_dataset import TextDataset
+from src.models.train import train_model
+from src.models.test import test_model
+from src.models.base_model import TransformerMLP
+from src.data.data_prep import prepare_data
+from src.datasets.text_dataset import TextDataset
 from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
 
-path_csv = 'data/file.txt'
+path_csv = 'src/data/raw/file.txt'
 df = pd.read_csv(path_csv)
 X, y, df = prepare_data(df)
 
@@ -23,8 +23,8 @@ y = label_encoder.fit_transform(y)
 
 # TODO: Convert constants into config.yaml loading
 MODEL_NAME = "roberta-base"  # Change to "distilbert-base-uncased" for DistilBERT
-CHECKPOINT_DIR = 'models/checkpoints'
-FINAL_MODEL_DIR = 'models/final_model'
+CHECKPOINT_DIR = 'src/models/checkpoints'
+FINAL_MODEL_DIR = 'src/models/final_model'
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
@@ -35,9 +35,9 @@ X_train, X_test, y_train, y_test = train_test_split(X.tolist(), y.tolist(), test
 X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.1, random_state=42)
 
 
-train_dataset = TextDataset(X_train, y_train)
-val_dataset = TextDataset(X_val, y_val)
-test_dataset = TextDataset(X_test, y_test)
+train_dataset = TextDataset(X_train, y_train, MODEL_NAME)
+val_dataset = TextDataset(X_val, y_val, MODEL_NAME)
+test_dataset = TextDataset(X_test, y_test, MODEL_NAME)
 
 train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=8, shuffle=False)
