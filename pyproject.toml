@@ -19,12 +19,12 @@ opentelemetry-exporter-otlp-proto-grpc = "^1.30.0"
 scikit-learn = "^1.6.1"
 torch = "^2.6.0"
 transformers = "^4.49.0"
+prometheus-client = "^0.21.1"
 
 
 [tool.poetry.group.dev.dependencies]
 lazypredict = "^0.2.13"
 matplotlib = "^3.10.0"
-onnx = "^1.17.0"
 
 [build-system]
 requires = ["poetry-core"]
