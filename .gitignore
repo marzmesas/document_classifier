@@ -1,8 +1,59 @@
-.env
-.DS_Store
-# Ignore Python cache files
+# Python
 __pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Ignore Jupyter Notebook checkpoints
+# Virtual Environment
+.env
+.venv
+env/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Project specific
+src/models/checkpoints/
+src/models/final_model/
+*.pt
+*.pth
+!src/models/final_model/roberta_mlp_best_model_torchscript.pt
+
+# Jupyter
 .ipynb_checkpoints/
+*.ipynb_checkpoints
+*.ipynb
+
+# Logs
+*.log
+logs/
+
+# Coverage reports
+.coverage
+coverage.xml
+htmlcov/
+
+# Mac
+.DS_Store
 
