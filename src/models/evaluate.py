@@ -2,7 +2,7 @@ import torch
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score
 
-def test_model(model, test_loader, device):
+def evaluate_model(model, test_loader, device):
     model.eval()
     predictions, actuals = [], []
     loop = tqdm(test_loader, desc="Evaluating", leave=True)

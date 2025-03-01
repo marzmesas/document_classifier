@@ -4,7 +4,7 @@ import torch.optim as optim
 import pandas as pd
 from transformers import AutoTokenizer
 from src.models.train import train_model
-from src.models.test import test_model
+from src.models.evaluate import evaluate_model
 from src.models.base_model import TransformerMLP
 from src.data.data_prep import prepare_data
 from src.datasets.text_dataset import TextDataset
@@ -58,5 +58,5 @@ optimizer = optim.AdamW(model.parameters(), lr=2e-5)
 train_model(model, train_loader, val_loader, optimizer, criterion, device, CHECKPOINT_DIR, FINAL_MODEL_DIR)
 
 # Test trained model 
-test_model(model, test_loader, device)
+evaluate_model(model, test_loader, device)
 
