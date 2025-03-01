@@ -2,11 +2,15 @@ import torch
 from transformers import AutoTokenizer
 import torch.nn.functional as F
 from typing import Dict, Tuple, Any
+import logging
 
 # Global model and tokenizer instances
 _model = None
 _tokenizer = None
 _device = None
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 def initialize_model(model_path: str, tokenizer_name: str = "roberta-base", device: str = None) -> None:
     """Initialize the model and tokenizer."""
@@ -18,10 +22,10 @@ def initialize_model(model_path: str, tokenizer_name: str = "roberta-base", devi
         "mps" if torch.backends.mps.is_available() else 
         "cpu"
     )
-    
+    logging.info(f"The detected device is:{ _device}")
     # Load tokenizer and model
     _tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
-    _model = torch.jit.load(model_path)
+    _model = torch.jit.load(model_path, map_location=_device)
     _model.to(_device)
     _model.eval()
 
