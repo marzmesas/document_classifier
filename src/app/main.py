@@ -16,7 +16,6 @@ from opentelemetry import metrics
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
-from prometheus_client import start_http_server
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import ConsoleMetricExporter
@@ -58,7 +57,6 @@ if LOCAL_TESTING:
     metric_exporter = ConsoleMetricExporter()
 else:
     metric_exporter = OTLPMetricExporter(endpoint="http://otel-collector:4317", insecure=True)
-    start_http_server(port=9090)
 metric_reader = PeriodicExportingMetricReader(metric_exporter)
 metrics_provider = MeterProvider(
     resource=resource,
