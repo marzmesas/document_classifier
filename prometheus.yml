@@ -8,4 +8,8 @@ scrape_configs:
       - targets: ['otel-collector:8889']
     metric_relabel_configs:
       - action: labeldrop
-        regex: ^target_info.* 
+        regex: ^target_info.*
+
+  # - job_name: 'app-1'
+  #   static_configs:
+  #     - targets: ['app-1:9090']

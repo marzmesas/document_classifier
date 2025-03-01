@@ -23,7 +23,7 @@ from opentelemetry.sdk.metrics.export import ConsoleMetricExporter
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.semconv.resource import ResourceAttributes
 
-LOCAL_TESTING = True  # Set to False to use collector
+LOCAL_TESTING = False  # Set to False to use collector
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -34,12 +34,21 @@ resource = Resource.create({
     ResourceAttributes.SERVICE_NAME: "document-classifier"
 })
 
+# Create a meter instance
+meter = metrics.get_meter_provider().get_meter("document-classifier")
+
+# Define a custom counter metric to track successful inferences
+successful_inferences_counter = meter.create_counter(
+    "successful_inferences_total", 
+    description="Total number of successful predictions"
+)
+
 # Initialize tracing with resource
 tracer_provider = TracerProvider(resource=resource)
 if LOCAL_TESTING:
     span_exporter = ConsoleSpanExporter()
 else:
-    span_exporter = OTLPSpanExporter(endpoint="http://localhost:4317", insecure=True)
+    span_exporter = OTLPSpanExporter(endpoint="http://otel-collector:4317", insecure=True)
 span_processor = SimpleSpanProcessor(span_exporter)
 tracer_provider.add_span_processor(span_processor)
 trace.set_tracer_provider(tracer_provider)
@@ -48,7 +57,7 @@ trace.set_tracer_provider(tracer_provider)
 if LOCAL_TESTING:
     metric_exporter = ConsoleMetricExporter()
 else:
-    metric_exporter = OTLPMetricExporter(endpoint="http://localhost:4317", insecure=True)
+    metric_exporter = OTLPMetricExporter(endpoint="http://otel-collector:4317", insecure=True)
     start_http_server(port=9090)
 metric_reader = PeriodicExportingMetricReader(metric_exporter)
 metrics_provider = MeterProvider(
@@ -99,6 +108,7 @@ def create_app() -> FastAPI:
     async def predict_endpoint(request: DocumentRequest):
         try:
             result = predict(request.text)
+            successful_inferences_counter.add(1)
             return result
         except RuntimeError as e:
             logger.error(f"Prediction error: {str(e)}")
