@@ -27,6 +27,7 @@ exporters:
     namespace: "otel"
     const_labels:
       label1: value1
+  # TODO: Add Loki exporter and configure it in docker-compose.yaml
   otlphttp:
     endpoint: "http://loki:3100/loki/api/v1/push"
 
