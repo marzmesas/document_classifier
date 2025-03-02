@@ -41,6 +41,15 @@ if not TESTING:
     from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.semconv.resource import ResourceAttributes
+    
+    # Add these imports for logging
+    from opentelemetry._logs import set_logger_provider
+    from opentelemetry.sdk._logs import LoggerProvider
+    from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+    from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
+    
+    # Import our custom logging setup
+    from src.observability.logging import setup_otel_logging
 
     # Define resource with service name
     resource = Resource.create({
@@ -71,6 +80,19 @@ if not TESTING:
         metric_readers=[metric_reader]
     )
     metrics.set_meter_provider(metrics_provider)
+    
+    # Initialize logging with same resource
+    logger_provider = LoggerProvider(resource=resource)
+    log_exporter = OTLPLogExporter(endpoint="http://otel-collector:4317", insecure=True)
+    logger_provider.add_log_record_processor(BatchLogRecordProcessor(log_exporter))
+    set_logger_provider(logger_provider)
+    
+    # Set up OpenTelemetry logging with the same resource
+    setup_otel_logging(resource=resource)
+    
+    # Create a logger for this module
+    logger = logging.getLogger(__name__)
+    logger.info("OpenTelemetry initialization complete")
 else:
     # Create dummy counter for testing
     class DummyCounter:
@@ -116,6 +138,7 @@ def create_app() -> FastAPI:
         try:
             result = predict(request.text)
             successful_inferences_counter.add(1)
+            logger.info(f"Prediction successful: {result}")
             return result
         except RuntimeError as e:
             logger.error(f"Prediction error: {str(e)}")

@@ -14,10 +14,10 @@ processors:
 exporters:
   debug:
     verbosity: normal
-  # jaeger:
-  #   endpoint: jaeger:14250
-  #   tls:
-  #    insecure: true
+  otlphttp:
+    endpoint: "http://jaeger:4318"
+    tls:
+      insecure: true
   otlp:
     endpoint: otel-collector:4317
     tls:
@@ -27,21 +27,23 @@ exporters:
     namespace: "otel"
     const_labels:
       label1: value1
-  # TODO: Add Loki exporter and configure it in docker-compose.yaml
-  otlphttp:
+  loki:
     endpoint: "http://loki:3100/loki/api/v1/push"
+    default_labels_enabled:
+      exporter: true
+      job: true
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [debug]
+      exporters: [otlphttp, debug]
     metrics:
       receivers: [otlp]
       processors: [batch]
-      exporters: [prometheus]
+      exporters: [prometheus, debug]
     logs:
       receivers: [otlp]
       processors: [batch]
-      exporters: [otlphttp]
+      exporters: [loki, debug]
