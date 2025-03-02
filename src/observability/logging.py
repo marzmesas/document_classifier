@@ -15,6 +15,26 @@ class OpenTelemetryLogHandler(logging.Handler):
         self.resource = resource or get_logger_provider().resource
             
     def emit(self, record):
+        """
+        Transform and forward Python logging records to OpenTelemetry.
+        
+        This method is called by the Python logging system whenever a log record needs to be processed.
+        It converts standard Python LogRecord objects into OpenTelemetry LogRecord format and
+        forwards them to the OpenTelemetry logging system.
+        
+        The method also extracts trace context from the current span (if available) to maintain
+        trace continuity between logs and traces.
+        
+        Parameters:
+            record (logging.LogRecord): The Python logging record to be processed
+        
+        Returns:
+            None
+        
+        Note:
+            This method calls a different `emit` method on the OpenTelemetry logger object.
+            The name similarity is coincidental - they are different methods on different objects.
+        """
         try:
             # Default values if no span context
             trace_id = INVALID_TRACE_ID
