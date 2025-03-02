@@ -1,0 +1,36 @@
+# Application configuration
+app:
+  title: "Document Classification API"
+  description: "API for classifying documents into predefined categories"
+  version: "1.0.0"
+
+# Model configuration
+model:
+  path: "src/models/final_model/roberta_mlp_best_model_torchscript.pt"
+  max_length: 512
+  batch_size: 32
+
+# Server configuration
+server:
+  host: "0.0.0.0"
+  port: 8000
+  
+# Observability configuration
+observability:
+  service_name: "document-classifier"
+  otel_collector_endpoint: "http://otel-collector:4317"
+
+# Training configuration
+training:
+  backbone_transformer: "roberta-base"
+  checkpoint_dir: "src/models/checkpoints"
+  final_model_dir: "src/models/final_model"
+  batch_size: 8
+  learning_rate: 2e-5
+  train_test_split: 0.1
+  val_split: 0.1
+  random_seed: 42
+
+# Data configuration
+data:
+  path: "src/data/raw/file.txt"

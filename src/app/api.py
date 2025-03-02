@@ -7,6 +7,7 @@ import logging
 from contextlib import asynccontextmanager
 from src.workflows.inference import initialize_model, predict
 import os
+import yaml
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -14,6 +15,26 @@ logger = logging.getLogger(__name__)
 
 # Check if we're in testing mode
 TESTING = os.environ.get("TESTING", "False").lower() == "true"
+
+# Load configuration
+try:
+    with open("config.yaml", "r") as f:
+        config = yaml.safe_load(f)
+    logger.info("Configuration loaded successfully")
+except Exception as e:
+    logger.error(f"Error loading configuration: {str(e)}")
+    # Fallback to defaults if config can't be loaded
+    config = {
+        "app": {
+            "title": "Document Classification API",
+            "description": "API for classifying documents into predefined categories",
+            "version": "1.0.0"
+        },
+        "model": {
+            "path": "src/models/final_model/roberta_mlp_best_model_torchscript.pt"
+        }
+    }
+    logger.warning("Using default configuration")
 
 # Define request and response models
 class DocumentRequest(BaseModel):
@@ -51,13 +72,14 @@ if not TESTING:
     # Import our custom logging setup
     from src.observability.logging import setup_otel_logging
 
-    # Define resource with service name
+    # Define resource with service name from config
+    service_name = config.get("observability", {}).get("service_name", "document-classifier")
     resource = Resource.create({
-        ResourceAttributes.SERVICE_NAME: "document-classifier"
+        ResourceAttributes.SERVICE_NAME: service_name
     })
 
     # Create a meter instance
-    meter = metrics.get_meter_provider().get_meter("document-classifier")
+    meter = metrics.get_meter_provider().get_meter(service_name)
 
     # Define a custom counter metric to track successful inferences
     successful_inferences_counter = meter.create_counter(
@@ -65,15 +87,20 @@ if not TESTING:
         description="Total number of successful predictions"
     )
 
+    # Get OTel collector endpoint from config
+    otel_endpoint = config.get("observability", {}).get(
+        "otel_collector_endpoint", "http://otel-collector:4317"
+    )
+
     # Initialize tracing with resource
     tracer_provider = TracerProvider(resource=resource)
-    span_exporter = OTLPSpanExporter(endpoint="http://otel-collector:4317", insecure=True)
+    span_exporter = OTLPSpanExporter(endpoint=otel_endpoint, insecure=True)
     span_processor = SimpleSpanProcessor(span_exporter)
     tracer_provider.add_span_processor(span_processor)
     trace.set_tracer_provider(tracer_provider)
 
     # Initialize metrics with same resource
-    metric_exporter = OTLPMetricExporter(endpoint="http://otel-collector:4317", insecure=True)
+    metric_exporter = OTLPMetricExporter(endpoint=otel_endpoint, insecure=True)
     metric_reader = PeriodicExportingMetricReader(metric_exporter)
     metrics_provider = MeterProvider(
         resource=resource,
@@ -83,7 +110,7 @@ if not TESTING:
     
     # Initialize logging with same resource
     logger_provider = LoggerProvider(resource=resource)
-    log_exporter = OTLPLogExporter(endpoint="http://otel-collector:4317", insecure=True)
+    log_exporter = OTLPLogExporter(endpoint=otel_endpoint, insecure=True)
     logger_provider.add_log_record_processor(BatchLogRecordProcessor(log_exporter))
     set_logger_provider(logger_provider)
     
@@ -105,10 +132,10 @@ else:
 async def lifespan(_app: FastAPI):
     # Startup: Initialize model
     try:
-        # TODO: Change to config.yaml value, not hardcoded path
-        # Always initialize the model, even in testing mode
-        initialize_model("src/models/final_model/roberta_mlp_best_model_torchscript.pt")
-        logger.info("Model initialized successfully")
+        # Get model path from config
+        model_path = config["model"]["path"]
+        initialize_model(model_path)
+        logger.info(f"Model initialized successfully from {model_path}")
     except Exception as e:
         logger.error(f"Failed to initialize model: {str(e)}")
         raise e
@@ -119,10 +146,12 @@ async def lifespan(_app: FastAPI):
     logger.info("Shutting down application")
 
 def create_app() -> FastAPI:
+    # Get app config values
+    app_config = config.get("app", {})
     app = FastAPI(
-        title="Document Classification API",
-        description="API for classifying documents into predefined categories",
-        version="1.0.0",
+        title=app_config.get("title", "Document Classification API"),
+        description=app_config.get("description", "API for classifying documents into predefined categories"),
+        version=app_config.get("version", "1.0.0"),
         docs_url="/docs",
         redoc_url="/redoc",
         lifespan=lifespan

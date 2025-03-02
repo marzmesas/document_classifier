@@ -133,6 +133,8 @@ document-classifier/
 ├── pyproject.toml           # Poetry dependencies
 ├── .gitattributes           # Git LFS configuration
 ├── .gitignore               # Git ignore configuration
+├── .coveragerc              # Coverage configuration
+├── config.yaml              # Application configuration
 └── README.md                # Project documentation
 ```
 
