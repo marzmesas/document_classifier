@@ -47,9 +47,9 @@ cd document-classifier
 # On macOS:
 brew install git-lfs
 # On Ubuntu:
-# sudo apt-get install git-lfs
+sudo apt-get install git-lfs
 # On Windows with Chocolatey:
-# choco install git-lfs
+choco install git-lfs
 
 # Initialize Git LFS
 git lfs install
