@@ -27,14 +27,14 @@ COPY --from=builder /usr/local/bin/ /usr/local/bin/
 # Copy application source code
 COPY . .
 
-# Ensure Uvicorn is installed (as a fallback)
-RUN pip install --no-cache-dir uvicorn
+# Ensure Uvicorn and Streamlit are installed (as a fallback)
+RUN pip install --no-cache-dir uvicorn streamlit
 
 # Set environment variable to force PyTorch to use CPU
 ENV PYTORCH_ENABLE_MPS_FALLBACK=1
 
-# Expose the FastAPI port
-EXPOSE 8000
+# Expose both the FastAPI and Streamlit ports
+EXPOSE 8000 8501
 
-# Run the application
-CMD ["uvicorn", "src.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run the app services startup script
+CMD ["python", "src/app/start_app_services.py"]

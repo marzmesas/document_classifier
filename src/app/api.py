@@ -106,9 +106,9 @@ async def lifespan(_app: FastAPI):
     # Startup: Initialize model
     try:
         # TODO: Change to config.yaml value, not hardcoded path
-        if not TESTING:  # Skip model initialization in testing
-            initialize_model("src/models/final_model/roberta_mlp_best_model_torchscript.pt")
-            logger.info("Model initialized successfully")
+        # Always initialize the model, even in testing mode
+        initialize_model("src/models/final_model/roberta_mlp_best_model_torchscript.pt")
+        logger.info("Model initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize model: {str(e)}")
         raise e
