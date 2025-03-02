@@ -30,7 +30,15 @@ training:
   train_test_split: 0.1
   val_split: 0.1
   random_seed: 42
+  epochs: 3
 
 # Data configuration
 data:
   path: "src/data/raw/file.txt"
+
+# MLflow configuration
+mlflow:
+  tracking_uri: "sqlite:///mlruns.db"
+  experiment_name: "document-classifier"
+  # Uncomment for remote MLflow server
+  # tracking_uri: "http://mlflow-server:5000"

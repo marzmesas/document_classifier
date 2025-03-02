@@ -39,7 +39,7 @@ def save_best_model(model, device, train_loader, final_dir):
     traced_model.save(scripted_model_path)
 
 def train_model(model, train_loader, val_loader, optimizer, criterion, device, 
-                checkpoint_dir, final_dir, epochs=3):
+                checkpoint_dir, final_dir, epochs=3, mlflow_run=None):
     model.train()
     best_val_loss = float("inf")
 
@@ -89,7 +89,28 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, device,
 
         print("Generating robustness report for epoch:  ", epoch+1)
         # Generate robustness report with class distribution
-        generate_robustness_report(actuals, predictions)
+        robustness_report = generate_robustness_report(actuals, predictions)
+        
+        # Log metrics to MLflow if available
+        if mlflow_run:
+            import mlflow
+            
+            # Log basic training metrics
+            mlflow.log_metrics({
+                f"train_loss_epoch_{epoch+1}": avg_train_loss,
+                f"val_loss_epoch_{epoch+1}": avg_val_loss,
+                f"epoch_{epoch+1}_accuracy": robustness_report["Accuracy"],
+                f"epoch_{epoch+1}_precision": robustness_report["Precision"],
+                f"epoch_{epoch+1}_recall": robustness_report["Recall"],
+                f"epoch_{epoch+1}_f1": robustness_report["F1-Score"]
+            }, step=epoch+1)
+            
+            # Log class distribution as a separate metric for each class
+            for class_id, stats in robustness_report["Class Distribution"].items():
+                mlflow.log_metrics({
+                    f"epoch_{epoch+1}_class_{class_id}_actual_count": stats["Actual Count"],
+                    f"epoch_{epoch+1}_class_{class_id}_predicted_count": stats["Predicted Count"],
+                }, step=epoch+1)
 
         # Save checkpoint after every epoch
         save_checkpoint(model, optimizer, epoch, avg_val_loss, checkpoint_dir)
@@ -98,3 +119,10 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, device,
         if avg_val_loss < best_val_loss:
             best_val_loss = avg_val_loss
             save_best_model(model, device, train_loader, final_dir)
+            
+            # Log best model metrics to MLflow
+            if mlflow_run:
+                mlflow.log_metrics({
+                    "best_val_loss": best_val_loss,
+                    "best_model_epoch": epoch + 1
+                })

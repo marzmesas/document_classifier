@@ -1,12 +1,13 @@
 # Document Classifier
 
-A production-ready application for classifying text documents into predefined categories. Built with RoBERTa transformer models, FastAPI, Streamlit, and includes comprehensive observability using OpenTelemetry, Prometheus, Loki, Jaeger, and Grafana.
+A production-ready application for classifying text documents into predefined categories. Built with RoBERTa transformer models, FastAPI, Streamlit, and includes comprehensive observability using OpenTelemetry, MLflow, Prometheus, Loki, Jaeger, and Grafana.
 
 ## Features
 
 - **ML Model**: Transformer-based document classification (RoBERTa + MLP)
 - **API Backend**: FastAPI for efficient and type-safe API endpoints
 - **User Interface**: Streamlit-based interactive UI for easy document classification
+- **Experiment Tracking**: MLflow for tracking model training, parameters, and performance
 - **Observability**: Complete telemetry with metrics, traces, and logs
 - **Containerized**: Docker and Docker Compose setup for easy deployment
 - **Testing**: Comprehensive test suite for all components
@@ -17,6 +18,7 @@ The application consists of:
 
 - **FastAPI Backend**: Serves the ML model and provides prediction endpoints
 - **Streamlit Frontend**: User interface for document submission and classification
+- **MLflow**: Experiment tracking, model versioning, and registry
 - **OpenTelemetry**: End-to-end tracing, metrics, and logging
 - **Observability Stack**:
   - Prometheus for metrics collection
@@ -152,11 +154,47 @@ poetry run pytest --cov=src tests/
 
 ## Training a New Model
 
-To train a new classification model:
+To train a new classification model with experiment tracking:
 
 ```bash
 # Run the training workflow
 python -m src.workflows.training
+```
+
+All training runs are automatically tracked in MLflow, including:
+- Model parameters
+- Training and validation metrics
+- Model artifacts
+
+## MLflow Experiment Tracking
+
+When you run training, MLflow will generate a local tracking database and artifacts directory (these are gitignored).
+
+View experiment results and compare model runs:
+
+```bash
+# Start the MLflow UI
+mlflow ui --backend-store-uri sqlite:///mlruns.db
+```
+
+Access the MLflow UI at http://localhost:5000 to:
+- Compare different training runs
+- View learning curves
+- Examine model parameters
+- Download saved models and artifacts
+
+### Setting Up a Shared MLflow Server (Optional)
+
+For team collaboration, consider setting up a shared MLflow tracking server:
+
+1. Update the `mlflow.tracking_uri` in `config.yaml` to point to your shared server
+2. Make sure all team members use the same tracking URI
+
+```yaml
+# Example for a shared MLflow server in config.yaml
+mlflow:
+  tracking_uri: "http://shared-mlflow-server:5000"
+  experiment_name: "document-classifier"
 ```
 
 ## License

@@ -54,3 +54,9 @@ htmlcov/
 # Mac
 .DS_Store
 
+# MLflow tracking data
+mlruns/
+mlruns.db
+mlflow.db
+*.db
+

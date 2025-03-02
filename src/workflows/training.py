@@ -5,6 +5,9 @@ import pandas as pd
 import yaml
 import os
 import logging
+import mlflow
+# Set the TOKENIZERS_PARALLELISM environment variable before importing transformers
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 from transformers import AutoTokenizer
 from src.models.train import train_model
 from src.models.evaluate import evaluate_model
@@ -40,6 +43,10 @@ except Exception as e:
         },
         "data": {
             "path": "src/data/raw/file.txt"
+        },
+        "mlflow": {
+            "tracking_uri": "sqlite:///mlruns.db",
+            "experiment_name": "document-classifier"
         }
     }
     logger.warning("Using default training configuration")
@@ -47,16 +54,26 @@ except Exception as e:
 # Get values from config
 training_config = config.get("training", {})
 data_config = config.get("data", {})
+mlflow_config = config.get("mlflow", {})
 
 # Get model parameters from config with defaults
 MODEL_NAME = training_config.get("backbone_transformer", "roberta-base")
 CHECKPOINT_DIR = training_config.get("checkpoint_dir", "src/models/checkpoints")
 FINAL_MODEL_DIR = training_config.get("final_model_dir", "src/models/final_model")
-BATCH_SIZE = training_config.get("batch_size", 8)
-LEARNING_RATE = training_config.get("learning_rate", 2e-5)
-TRAIN_TEST_SPLIT = training_config.get("train_test_split", 0.1)
-VAL_SPLIT = training_config.get("val_split", 0.1)
-RANDOM_SEED = training_config.get("random_seed", 42)
+BATCH_SIZE = int(training_config.get("batch_size", 8))
+LEARNING_RATE = float(training_config.get("learning_rate", 2e-5))
+TRAIN_TEST_SPLIT = float(training_config.get("train_test_split", 0.1))
+VAL_SPLIT = float(training_config.get("val_split", 0.1))
+RANDOM_SEED = int(training_config.get("random_seed", 42))
+EPOCHS = int(training_config.get("epochs", 3))
+
+# Configure MLflow
+MLFLOW_TRACKING_URI = mlflow_config.get("tracking_uri", "sqlite:///mlruns.db")
+MLFLOW_EXPERIMENT_NAME = mlflow_config.get("experiment_name", "document-classifier")
+
+# Set up MLflow tracking
+mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+mlflow.set_experiment(MLFLOW_EXPERIMENT_NAME)
 
 # Load data
 path_csv = data_config.get("path", "src/data/raw/file.txt")
@@ -107,21 +124,88 @@ logger.info(f'Running the workflow on device: {device}')
 num_classes = len(set(y_train)) 
 logger.info(f"Number of classes: {num_classes}")
 
-# Initialize model
-model = TransformerMLP(MODEL_NAME, num_classes).to(device)
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.AdamW(model.parameters(), lr=LEARNING_RATE)
-
-# Ensure directories exist
-os.makedirs(CHECKPOINT_DIR, exist_ok=True)
-os.makedirs(FINAL_MODEL_DIR, exist_ok=True)
-
-# Train model
-logger.info("Starting model training...")
-train_model(model, train_loader, val_loader, optimizer, criterion, device, CHECKPOINT_DIR, FINAL_MODEL_DIR)
-
-# Test trained model 
-logger.info("Evaluating model on test set...")
-test_results = evaluate_model(model, test_loader, device)
-logger.info(f"Test results: {test_results}")
+# Start MLflow run
+with mlflow.start_run() as run:
+    run_id = run.info.run_id
+    logger.info(f"MLflow Run ID: {run_id}")
+    
+    # Log parameters
+    mlflow.log_params({
+        "model_name": MODEL_NAME,
+        "batch_size": BATCH_SIZE,
+        "learning_rate": LEARNING_RATE,
+        "random_seed": RANDOM_SEED,
+        "train_size": len(X_train),
+        "val_size": len(X_val),
+        "test_size": len(X_test),
+        "num_classes": num_classes,
+        "device": str(device),
+        "epochs": EPOCHS
+    })
+    
+    # Initialize model
+    model = TransformerMLP(MODEL_NAME, num_classes).to(device)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.AdamW(model.parameters(), lr=LEARNING_RATE)
+    
+    # Ensure directories exist
+    os.makedirs(CHECKPOINT_DIR, exist_ok=True)
+    os.makedirs(FINAL_MODEL_DIR, exist_ok=True)
+    
+    # Train model
+    logger.info("Starting model training...")
+    train_model(
+        model, 
+        train_loader, 
+        val_loader, 
+        optimizer, 
+        criterion, 
+        device, 
+        CHECKPOINT_DIR, 
+        FINAL_MODEL_DIR,
+        epochs=EPOCHS,
+        mlflow_run=run  # Pass the MLflow run to the train function
+    )
+    
+    # Test trained model 
+    logger.info("Evaluating model on test set...")
+    test_results = evaluate_model(model, test_loader, device)
+    logger.info(f"Test results: {test_results}")
+    
+    # Log metrics from test results
+    mlflow.log_metrics({
+        "test_accuracy": test_results["Accuracy"],
+        "test_precision": test_results["Precision"],
+        "test_recall": test_results["Recall"],
+        "test_f1": test_results["F1-Score"]
+    })
+    
+    # Log models as artifacts
+    best_model_path = os.path.join(FINAL_MODEL_DIR, "roberta_mlp_best_model.pth")
+    scripted_model_path = os.path.join(FINAL_MODEL_DIR, "roberta_mlp_best_model_torchscript.pt")
+    
+    mlflow.log_artifact(best_model_path, "model")
+    mlflow.log_artifact(scripted_model_path, "model/torchscript")
+    
+    # Log model with the MLflow model registry
+    # Get a sample input for model signature inference
+    sample_input = next(iter(train_loader))
+    sample_input_ids = sample_input["input_ids"][0].unsqueeze(0).to(device)
+    sample_attention_mask = sample_input["attention_mask"][0].unsqueeze(0).to(device)
+    
+    # Create an input example dictionary
+    input_example = {
+        "input_ids": sample_input_ids.cpu().numpy(),
+        "attention_mask": sample_attention_mask.cpu().numpy()
+    }
+    
+    # Log model with input example for signature inference
+    mlflow.pytorch.log_model(
+        model, 
+        "pytorch_model",
+        registered_model_name="document_classifier",
+        input_example=input_example
+    )
+    
+    logger.info(f"Training completed. MLflow run ID: {run_id}")
 
