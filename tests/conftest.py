@@ -1,7 +1,7 @@
 import sys
 import os
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 # Add the project root directory to Python's path
 root_dir = Path(__file__).parent.parent
@@ -15,7 +15,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 # Import app after setting environment
-from src.app.api import app, create_app
+from src.app.api import app
 from src.workflows.inference import initialize_model
 
 # Set up mocks for OpenTelemetry
@@ -50,4 +50,4 @@ def setup_model():
     # Initialize model for testing
     model_path = "src/models/final_model/roberta_mlp_best_model_torchscript.pt"
     if os.path.exists(model_path):
-        initialize_model(model_path) 
+        initialize_model(model_path)
