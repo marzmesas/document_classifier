@@ -35,10 +35,6 @@ ENV/
 
 # Project specific
 src/models/checkpoints/
-src/models/final_model/
-*.pt
-*.pth
-!src/models/final_model/roberta_mlp_best_model_torchscript.pt
 
 # Jupyter
 .ipynb_checkpoints/

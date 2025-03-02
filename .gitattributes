@@ -1,2 +1,4 @@
 *.pt filter=lfs diff=lfs merge=lfs -text
 *.pth filter=lfs diff=lfs merge=lfs -text
+src/models/final_model/*.pth filter=lfs diff=lfs merge=lfs -text
+src/models/final_model/*.pt filter=lfs diff=lfs merge=lfs -text
