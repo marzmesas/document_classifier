@@ -1,6 +1,7 @@
 import torch
-from tqdm import tqdm
 import os
+from tqdm import tqdm
+from src.models.utils import generate_robustness_report
 
 def save_checkpoint(model, optimizer, epoch, loss, checkpoint_dir):
     """Save model checkpoint (state_dict only)."""
@@ -37,12 +38,11 @@ def save_best_model(model, device, train_loader, final_dir):
     traced_model = torch.jit.trace(model, (real_input_ids, real_attention_mask))
     traced_model.save(scripted_model_path)
 
-def train_model(model, train_loader, val_loader, 
-                optimizer, criterion, device, 
+def train_model(model, train_loader, val_loader, optimizer, criterion, device, 
                 checkpoint_dir, final_dir, epochs=3):
     model.train()
     best_val_loss = float("inf")
-    
+
     for epoch in range(epochs):
         total_train_loss = 0
         loop = tqdm(train_loader, desc=f"Epoch {epoch+1}/{epochs}", leave=True)
@@ -67,6 +67,8 @@ def train_model(model, train_loader, val_loader,
         # Validation phase
         model.eval()
         total_val_loss = 0
+        predictions, actuals = [], []
+        
         with torch.no_grad():
             for batch in val_loader:
                 input_ids = batch["input_ids"].to(device)
@@ -77,9 +79,17 @@ def train_model(model, train_loader, val_loader,
                 loss = criterion(outputs, labels)
                 total_val_loss += loss.item()
 
+                _, preds = torch.max(outputs.cpu(), 1)
+                predictions.extend(preds.numpy())
+                actuals.extend(labels.cpu().numpy().flatten())
+
         avg_val_loss = total_val_loss / len(val_loader)
 
         print(f"\nEpoch {epoch+1}: Train Loss = {avg_train_loss:.4f}, Val Loss = {avg_val_loss:.4f}\n")
+
+        print("Generating robustness report for epoch:  ", epoch+1)
+        # Generate robustness report with class distribution
+        generate_robustness_report(actuals, predictions)
 
         # Save checkpoint after every epoch
         save_checkpoint(model, optimizer, epoch, avg_val_loss, checkpoint_dir)

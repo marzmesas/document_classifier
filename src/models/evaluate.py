@@ -1,11 +1,14 @@
 import torch
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score
+from src.models.utils import generate_robustness_report
 
 def evaluate_model(model, test_loader, device):
+    """Evaluate model on test set and generate robustness report."""
     model.eval()
     predictions, actuals = [], []
     loop = tqdm(test_loader, desc="Evaluating", leave=True)
+    
     with torch.no_grad():
         for batch in loop:
             input_ids = batch["input_ids"].to(device)
@@ -17,5 +20,8 @@ def evaluate_model(model, test_loader, device):
             predictions.extend(preds.numpy())
             actuals.extend(labels.cpu().numpy().flatten())
 
-    acc = accuracy_score(actuals, predictions)
-    print(f"Test Accuracy: {acc:.4f}")
+    # Generate robustness report with class distribution
+    print("Generating robustness report for testing set...")
+    report = generate_robustness_report(actuals, predictions)
+    return report
+    
