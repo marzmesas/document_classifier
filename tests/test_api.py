@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
 import json
-from src.app.main import app
+from src.app.api import app
 
 # Create a test client
 client = TestClient(app)
@@ -11,7 +11,7 @@ client = TestClient(app)
 def mock_predict():
     # Try different import paths to find the correct one
     try:
-        with patch('src.app.main.predict') as mock:
+        with patch('src.app.api.predict') as mock:
             mock.return_value = {
                 "predicted_class": 7,  # Updated to match actual value
                 "confidence": 0.85,
@@ -29,7 +29,7 @@ def mock_predict():
 
 @pytest.fixture
 def mock_initialize_model():
-    with patch('src.app.main.initialize_model') as mock:
+    with patch('src.app.api.initialize_model') as mock:
         yield mock
 
 @pytest.fixture
@@ -105,7 +105,7 @@ def test_predict_endpoint_missing_text():
 def test_predict_endpoint_handles_errors():
     # Use a try/except to handle potential issues with patching
     try:
-        with patch('src.app.main.predict', side_effect=Exception("Model prediction failed")):
+        with patch('src.app.api.predict', side_effect=Exception("Model prediction failed")):
             response = client.post(
                 "/predict/",
                 json={"text": 5}

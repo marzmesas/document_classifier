@@ -4,12 +4,14 @@ services:
       context: .
       dockerfile: src/app/Dockerfile
     ports:
-      - "8000:8000"
+      - "8000:8000"  # FastAPI
+      - "8501:8501"  # Streamlit
     depends_on:
       - otel-collector
     environment:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
       - OTEL_SERVICE_NAME=document-classifier
+      - API_URL=http://localhost:8000  # Used by Streamlit to connect to FastAPI
 
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest  # Using contrib version for more exporters

@@ -15,7 +15,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 # Import app after setting environment
-from src.app.main import app, create_app
+from src.app.api import app, create_app
 from src.workflows.inference import initialize_model
 
 # Set up mocks for OpenTelemetry
