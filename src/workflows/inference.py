@@ -13,7 +13,23 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 def initialize_model(model_path: str, tokenizer_name: str = "roberta-base", device: str = None) -> None:
-    """Initialize the model and tokenizer."""
+    """
+    Initialize the model and tokenizer for inference.
+    
+    This function loads a pre-trained model from the specified path and initializes
+    the tokenizer needed for text preprocessing. It automatically selects the best 
+    available device (CUDA, MPS, or CPU) if none is specified.
+    
+    Args:
+        model_path (str): Path to the saved TorchScript model file
+        tokenizer_name (str, optional): Name or path of the pre-trained tokenizer.
+                                       Defaults to "roberta-base".
+        device (str, optional): Device to run the model on. If None, the best
+                              available device is selected automatically.
+                              
+    Raises:
+        RuntimeError: If the model file cannot be loaded
+    """
     global _model, _tokenizer, _device
     
     # Set device
@@ -30,7 +46,23 @@ def initialize_model(model_path: str, tokenizer_name: str = "roberta-base", devi
     _model.eval()
 
 def preprocess(text: str) -> Tuple[torch.Tensor, torch.Tensor]:
-    """Preprocess the input text."""
+    """
+    Preprocess text input for model inference.
+    
+    This function tokenizes the input text and converts it to the appropriate
+    format required by the model, including padding and truncation.
+    
+    Args:
+        text (str): Raw text to be preprocessed
+        
+    Returns:
+        Tuple[torch.Tensor, torch.Tensor]: A tuple containing:
+            - input_ids: Token IDs from the tokenizer
+            - attention_mask: Attention mask indicating valid tokens
+            
+    Raises:
+        RuntimeError: If the model is not initialized
+    """
     if _tokenizer is None:
         raise RuntimeError("Model not initialized. Call initialize_model first.")
         
@@ -46,7 +78,24 @@ def preprocess(text: str) -> Tuple[torch.Tensor, torch.Tensor]:
 
 @torch.no_grad()
 def predict(text: str) -> Dict[str, Any]:
-    """Generate prediction for the input text."""
+    """
+    Generate classification prediction for the input text.
+    
+    This function takes raw text input, preprocesses it, and runs inference
+    using the initialized model to produce classification results.
+    
+    Args:
+        text (str): The text to classify
+        
+    Returns:
+        Dict[str, Any]: A dictionary containing:
+            - predicted_class (int): The predicted class ID (1-8)
+            - confidence (float): Confidence score for the prediction (0-1)
+            - probabilities (List[float]): Probability scores for all classes
+            
+    Raises:
+        RuntimeError: If the model is not initialized
+    """
     if _model is None:
         raise RuntimeError("Model not initialized. Call initialize_model first.")
     
@@ -69,8 +118,13 @@ def predict(text: str) -> Dict[str, Any]:
         'probabilities': probs[0].tolist()
     }
 
-# Example usage can be kept for testing
 def main():
+    """
+    Example usage of the inference module for testing purposes.
+    
+    This function demonstrates how to initialize the model, perform prediction
+    on a sample text, and display the results.
+    """
     model_path = "src/models/final_model/roberta_mlp_best_model_torchscript.pt"
     
     # Initialize model

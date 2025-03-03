@@ -4,7 +4,19 @@ from tqdm import tqdm
 from src.models.utils import generate_robustness_report
 
 def save_checkpoint(model, optimizer, epoch, loss, checkpoint_dir):
-    """Save model checkpoint (state_dict only)."""
+    """
+    Save model checkpoint including state dictionaries and metadata.
+    
+    Args:
+        model (torch.nn.Module): The model to save
+        optimizer (torch.optim.Optimizer): The optimizer to save
+        epoch (int): Current epoch number
+        loss (float): Current validation loss
+        checkpoint_dir (str): Directory path where checkpoint will be saved
+        
+    Returns:
+        None: Checkpoint is saved to disk
+    """
     if not os.path.exists(checkpoint_dir):
       os.makedirs(checkpoint_dir)
       print(f"Created directory: {checkpoint_dir}")
@@ -19,7 +31,21 @@ def save_checkpoint(model, optimizer, epoch, loss, checkpoint_dir):
     print(f"Checkpoint saved: {checkpoint_path}")
 
 def save_best_model(model, device, train_loader, final_dir):
-    """Save best model in TorchScript and ONNX formats for optimized inference."""
+    """
+    Save best model in TorchScript and regular PyTorch formats for deployment.
+    
+    This function saves the model in both native PyTorch format and optimized 
+    TorchScript format for faster inference in production.
+    
+    Args:
+        model (torch.nn.Module): The trained model to save
+        device (torch.device): The device to use for tracing (CPU or CUDA)
+        train_loader (DataLoader): DataLoader to get example inputs for tracing
+        final_dir (str): Directory path where the model files will be saved
+        
+    Returns:
+        None: Model files are saved to disk
+    """
     if not os.path.exists(final_dir):
         os.makedirs(final_dir)
         print(f"Created directory: {final_dir}")
@@ -40,6 +66,31 @@ def save_best_model(model, device, train_loader, final_dir):
 
 def train_model(model, train_loader, val_loader, optimizer, criterion, device, 
                 checkpoint_dir, final_dir, epochs=3, mlflow_run=None):
+    """
+    Train and validate the model, saving checkpoints and the best model.
+    
+    This function:
+    - Trains the model for the specified number of epochs
+    - Evaluates performance on validation data after each epoch
+    - Generates robustness reports with accuracy, precision, recall and F1-score
+    - Logs metrics to MLflow if a run is provided
+    - Saves checkpoints and the best model based on validation loss
+    
+    Args:
+        model (torch.nn.Module): Model to train
+        train_loader (DataLoader): DataLoader for training data
+        val_loader (DataLoader): DataLoader for validation data
+        optimizer (torch.optim.Optimizer): Optimizer for training
+        criterion (torch.nn.Module): Loss function
+        device (torch.device): Device to use for training (CPU or CUDA)
+        checkpoint_dir (str): Directory to save checkpoints
+        final_dir (str): Directory to save the best model
+        epochs (int, optional): Number of training epochs. Defaults to 3.
+        mlflow_run (mlflow.ActiveRun, optional): MLflow run for logging. Defaults to None.
+        
+    Returns:
+        None: Model is trained and saved to disk
+    """
     model.train()
     best_val_loss = float("inf")
 

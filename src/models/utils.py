@@ -3,9 +3,25 @@ from collections import Counter
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 def generate_robustness_report(actuals, predictions):
-    """Generate and print a robustness report with accuracy, precision, recall, and F1-score.
-       Also displays target class distribution to check for imbalance issues."""
+    """
+    Generate a comprehensive robustness report for model evaluation.
     
+    This function calculates key classification metrics and analyzes class distribution
+    to help identify potential issues like class imbalance or biased predictions.
+    
+    Args:
+        actuals (list): List of actual labels
+        predictions (list): List of predicted labels
+        
+    Returns:
+        dict: Report containing:
+            - Accuracy: Overall classification accuracy
+            - Precision: Weighted precision score
+            - Recall: Weighted recall score
+            - F1-Score: Weighted F1 score
+            - Class Distribution: Detailed statistics for each class showing actual and
+              predicted counts and percentages
+    """
     # Calculate performance metrics
     accuracy = accuracy_score(actuals, predictions)
     precision = precision_score(actuals, predictions, average='weighted', zero_division=0)

@@ -7,6 +7,21 @@ from opentelemetry.trace import get_current_span, INVALID_SPAN_ID, INVALID_TRACE
 from opentelemetry._logs.severity import SeverityNumber, std_to_otel
 
 class OpenTelemetryLogHandler(logging.Handler):
+    """
+    Custom logging handler that forwards Python logs to OpenTelemetry.
+    
+    This handler transforms standard Python logging records into OpenTelemetry
+    log records, preserving trace context and structured data for better
+    observability integration.
+    
+    Args:
+        service_name (str, optional): Name of the service for logging context.
+                                    Defaults to "document-classifier".
+        version (str, optional): Service version. Defaults to "1.0.0".
+        resource (Resource, optional): OpenTelemetry resource with service attributes.
+                                     Defaults to None.
+    """
+    
     def __init__(self, service_name="document-classifier", version="1.0.0", resource=None):
         super().__init__()
         self._logger = get_logger_provider().get_logger(service_name, version)
@@ -25,7 +40,7 @@ class OpenTelemetryLogHandler(logging.Handler):
         The method also extracts trace context from the current span (if available) to maintain
         trace continuity between logs and traces.
         
-        Parameters:
+        Args:
             record (logging.LogRecord): The Python logging record to be processed
         
         Returns:
@@ -98,10 +113,16 @@ class OpenTelemetryLogHandler(logging.Handler):
 def setup_otel_logging(resource=None):
     """
     Set up OpenTelemetry logging by adding the handler to the root logger.
-    Should be called after the logger provider has been initialized.
+    
+    This function configures Python's logging system to forward logs to the
+    OpenTelemetry collector, enabling integrated tracing, metrics, and logging.
     
     Args:
-        resource: The resource to use for log records, should be the same as used for metrics and tracing
+        resource (Resource, optional): The resource to use for log records, 
+                                     should be the same as used for metrics and tracing.
+                                     
+    Returns:
+        OpenTelemetryLogHandler: The configured handler instance
     """
     # Add OpenTelemetry handler with the provided resource
     otel_handler = OpenTelemetryLogHandler(resource=resource)

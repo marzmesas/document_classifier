@@ -130,6 +130,20 @@ else:
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    """
+    Manage application startup and shutdown lifecycle events.
+    
+    This async context manager initializes the model on startup and performs cleanup on shutdown.
+    
+    Args:
+        _app (FastAPI): The FastAPI application instance
+    
+    Yields:
+        None: Control is yielded back to FastAPI while the application is running
+    
+    Raises:
+        Exception: If model initialization fails
+    """
     # Startup: Initialize model
     try:
         # Get model path from config
@@ -146,6 +160,16 @@ async def lifespan(_app: FastAPI):
     logger.info("Shutting down application")
 
 def create_app() -> FastAPI:
+    """
+    Create and configure the FastAPI application instance.
+    
+    This function loads configuration, creates the FastAPI app with appropriate settings,
+    and sets up API endpoints. It also configures OpenTelemetry instrumentation when not
+    in testing mode.
+    
+    Returns:
+        FastAPI: Configured FastAPI application instance ready to serve requests
+    """
     # Get app config values
     app_config = config.get("app", {})
     app = FastAPI(
@@ -164,6 +188,22 @@ def create_app() -> FastAPI:
     
     @app.post("/predict", response_model=PredictionResponse)
     async def predict_endpoint(request: DocumentRequest):
+        """
+        Process document classification requests.
+        
+        This endpoint accepts document text and returns classification predictions including
+        the predicted class, confidence score, and probability distribution across all classes.
+        
+        Args:
+            request (DocumentRequest): Request object containing the document text to classify
+            
+        Returns:
+            PredictionResponse: Classification results including predicted class, 
+                               confidence score, and probability distribution
+                               
+        Raises:
+            HTTPException: If model prediction fails (status code 500)
+        """
         try:
             result = predict(request.text)
             successful_inferences_counter.add(1)
@@ -178,13 +218,23 @@ def create_app() -> FastAPI:
     
     @app.get("/")
     async def root():
+        """
+        Root endpoint that confirms the API is running.
+        
+        Returns:
+            dict: Simple message indicating the API is operational
+        """
         return {"message": "Document Classification API is running"}
     
     @app.get("/health", response_model=HealthResponse)
     def health_check():
         """
         Health check endpoint to verify the API is running properly.
-        Returns a 200 OK response with status: healthy if everything is working.
+        
+        This endpoint is used by monitoring systems to check if the API is operational.
+        
+        Returns:
+            HealthResponse: Response containing status "healthy" if everything is working
         """
         return {"status": "healthy"}
 

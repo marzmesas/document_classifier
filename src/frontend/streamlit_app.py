@@ -14,6 +14,17 @@ st.set_page_config(
 )
 
 def main():
+    """
+    Main function to run the Streamlit UI for document classification.
+    
+    This function:
+    1. Sets up the Streamlit user interface with title and description
+    2. Creates input fields for document text
+    3. Processes user requests for document classification
+    4. Displays classification results in a user-friendly format
+    5. Handles errors and connection issues gracefully
+    6. Provides debug information and documentation about document classes
+    """
     # Title and description
     st.title("Document Classifier")
     st.markdown("""
